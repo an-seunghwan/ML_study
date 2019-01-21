@@ -25,6 +25,12 @@
 	- -> 년도별로 분할 다운
 	- state : 90% clear : 다운만 받으면 됨
 
+6. 구주소 -> 신주소 
+	- C:\Users\dpelt\Downloads\XrOldAddressToNew\XrOldAddressToNew
+	- state : 80%
+	- 변환이 되지 않은 주소 확인하여 해결 필요
+	- but 잘못된 위치라고 mapping만 되면 올바른 결과라고 나옴 -> 해결 
+
 
 #### 기타
 
