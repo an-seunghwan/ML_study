@@ -54,8 +54,46 @@
 * vi .mpd.conf
 	+ MPD_SECRETWORD=<123456qwer!> 입력
 	+ wq를 이용해 저장
+	
+##### 3. SSH configuration 설정
+* 참고(youtube : https://www.youtube.com/watch?v=VcLEdqrvPKI)
+1. [master 서버]
+	* sudo apt-get install openssh-server
+	* (password 입력)
+	* ssh (slave IP 주소) -> yes
+	* (password 입력)
+	* 이때 slave IP주소로 이동한 것을 볼 수 있다
+	* exit
+	* cd .ssh
+	* 이때 known_hosts 파일이 있다면 성공
+2. [slave 서버]
+	* ssh (master IP 주소) -> yes
+	* 이때 master IP주소로 이동한 것을 볼 수 있다
+	* cd .ssh
+	* 이때 known_hosts 파일이 있다면 성공
+3. [master 서버]
+	* ssh (서버이름) -> yes
+	* cd .ssh
+	* ssh-keygen -t rsa
+	* enter 키 3번 누른다
+	* ls 
+		- id_rsa id_rsa.pub known_hosts 가 생성되었으면 성공
+	* scp id_rsa.pub user@(slave IP 주소):/.ssh
+	* (password 입력)
+	* exit
+	* ssh (slave IP주소)
+	* (password 입력)
+	* cd .ssh
+	* ls
+		- id_rsa.pub known_hosts 가 생성되었으면 성공
+	* cat id_rsa.pub >> authorized_keys
+	* ls
+		- authorized_keys id_rsa.pub known_hosts 가 생성되었으면 성공
+	* exit
+4. [최종확인]
+	* ~/.ssh$ ssh (slave IP주소) 를 실행하였을 때 비밀번호 입력없이 서버를 이동하였다면 ssh 설정 완료
 
-##### 3. R package 설치
+##### 4. R package 설치
 * Rmpi, foreach, doMPI package를 차례로 설치해준다
 
 
@@ -63,8 +101,6 @@
 		- sudo apt-get install libopenmpi-dev
 		- 설치 후 다시 Rmpi package 설치
 
-
-* ssh configuration을 수행한다(youtube : https://www.youtube.com/watch?v=VcLEdqrvPKI)
 
 ##### [현재상황]
 * stathdsf05와 stat04 서버는 ssh 통신이 가능
