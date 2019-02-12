@@ -92,6 +92,7 @@
 	* exit
 4. [최종확인]
 	* ~/.ssh$ ssh (slave IP주소) 를 실행하였을 때 비밀번호 입력없이 서버를 이동하였다면 ssh 설정 완료
+	* ssh directory로 이동하지 않고도 가능?
 
 ##### 4. R package 설치
 * Rmpi, foreach, doMPI package를 차례로 설치해준다
