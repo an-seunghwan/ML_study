@@ -74,8 +74,8 @@ sudo vi /etc/hosts
     	+ ...
     * master 컴퓨터의 경우 다음과 같이 설정한다
     	+ com1 slots = 5
-    	+ com2 slots = 5
-    	+ com3 slots = 5
+    	+ com2 slots = 4
+    	+ com3 slots = 4
     	+ ...
     		- 이때 slots 옵션은 각 컴퓨터 node마다 최대로 spawn할 slave의 개수를 말한다
     		- master가 작동하는 com1에 대해서는 master용 cpu 1개를 남기기위해 5개로 설정
