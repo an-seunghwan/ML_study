@@ -1,7 +1,7 @@
 # openMPI with R
 
 	본 설치는 ubuntu 16.04 버전에서 설치되었음
-    또한 sudo 계정을 이용한 설치를 권장함
+    또한 sudo 계정을 이용한 설치를 권장함(Rmpi를 사용하고자 하는 모든 컴퓨터의 local 아이디와 비밀번호 통일)
     ※ 특별한 경우가 아니면 모든 cluster내의 컴퓨터의 설치, 파일 저장, 라이브러리 경로를 동일하게 맞출 것
 
 ### 1. openMPI 설치
@@ -126,6 +126,9 @@ sudo vi /etc/hosts
 ```
 user@stathdfs05:~$ mpicc -o hello hello.c
 user@stathdfs05:~$ mpirun -n 13 -hostfile host_file ./hello
+```
+```
+(결과)
 Hello world from processor stathdfs05, rank 0 out of 13 processors
 Hello world from processor stathdfs05, rank 1 out of 13 processors
 Hello world from processor stathdfs05, rank 2 out of 13 processors
