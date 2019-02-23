@@ -3,6 +3,7 @@
 	본 설치는 ubuntu 16.04 버전에서 설치되었음
     또한 sudo 계정을 이용한 설치를 권장함(Rmpi를 사용하고자 하는 모든 컴퓨터의 local 아이디와 비밀번호 통일)
     ※ 특별한 경우가 아니면 모든 cluster내의 컴퓨터의 설치, 파일 저장, 라이브러리 경로를 동일하게 맞출 것
+    컴퓨터 간의 접속과 파일전송은 Putty와 FileZilla를 
 
 ### 1. openMPI 설치
 1. www.open-mpi.org 사이트에서 최신 release를 다운로드
@@ -157,6 +158,9 @@ install.packages("Rmpi")
 	+ rmpi_test.R 파일은 본 github에서 다운 가능
 ```
 user@stathdfs05:~$ mpirun -n 1 -hostfile host_file R --slave -f /home/user/rmpi_test.R
+```
+```
+(결과)
         12 slaves are spawned successfully. 0 failed.
 master  (rank 0 , comm 1) of size 13 is running on: stathdfs05
 slave1  (rank 1 , comm 1) of size 13 is running on: stathdfs05
