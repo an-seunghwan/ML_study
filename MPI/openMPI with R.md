@@ -3,7 +3,7 @@
 	본 설치는 ubuntu 16.04 버전에서 설치되었음
     또한 sudo 계정을 이용한 설치를 권장함(Rmpi를 사용하고자 하는 모든 컴퓨터의 local 아이디와 비밀번호 통일)
     ※ 특별한 경우가 아니면 모든 cluster내의 컴퓨터의 설치, 파일 저장, 라이브러리 경로를 동일하게 맞출 것
-    컴퓨터 간의 접속과 파일전송은 Putty와 FileZilla를 
+    컴퓨터 간의 접속과 파일전송은 Putty와 FileZilla를 이용하였습니다
 
 ### 1. openMPI 설치
 1. www.open-mpi.org 사이트에서 최신 release를 다운로드
@@ -57,14 +57,16 @@ Hello world from processor statushdfs04, rank 1 out of 2 processors
 ```
 
 ### 2. cluster 환경 설정
-	※ host name을 설정하는 과정에서 이름을 직접 설정해 주어야한다. 
-* 이 과정을 cluster 내의 모든 컴퓨터에서 동일하게 수행해준다
+```
+각 node의 IP주소와 이름을 직접 설정해 주어야한다. 
+다음의 과정을 cluster 내의 모든 컴퓨터에서 동일하게 수행해준다
+```
 1. cluster 내의 컴퓨터들의 IP주소 설정
 ```
 sudo vi /etc/hosts
 ```
 * 다음과 같이 수정한다
-	+ # 이때 localhost는 현재 컴퓨터 자신, com1, com2, ... 등은 이 컴퓨터와 연결된 나머지 컴퓨터들을 의미
+	+ (이때 localhost는 현재 컴퓨터 자신, com1, com2, ... 등은 이 컴퓨터와 연결된 나머지 컴퓨터들을 의미)
 	+ 127.0.0.1		localhost
 	+ 127.0.1.1		com1
 	+ [IP주소]      com2
