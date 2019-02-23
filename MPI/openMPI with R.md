@@ -58,21 +58,23 @@ Hello world from processor statushdfs04, rank 1 out of 2 processors
 
 ### 2. cluster 환경 설정
 	※ host name을 설정하는 과정에서 이름을 직접 설정해 주어야한다. 
+* 이 과정을 cluster 내의 모든 컴퓨터에서 동일하게 수행해준다
 1. cluster 내의 컴퓨터들의 IP주소 설정
 ```
 sudo vi /etc/hosts
 ```
 * 다음과 같이 수정한다
+	+ # 이때 localhost는 현재 컴퓨터 자신, com1, com2, ... 등은 이 컴퓨터와 연결된 나머지 컴퓨터들을 의미
 	+ 127.0.0.1		localhost
 	+ 127.0.1.1		com1
 	+ [IP주소]      com2
 	+ ...
-2. sudo vi host_file    
-	* 각 줄마다 cluster내의 컴퓨터의 이름들을 입력한다(node 컴퓨터)
-    	+ com1 
-    	+ com2
-    	+ com3
-    	+ ...
+2. ```sudo vi host_file```
+	* 각 줄마다 cluster내의 컴퓨터의 이름들을 입력한다(node 컴퓨터에서 수행)
+    		+ com1 
+    		+ com2
+    		+ com3
+    		+ ...
     * master 컴퓨터의 경우 다음과 같이 설정한다
     	+ com1 slots = 5
     	+ com2 slots = 4
