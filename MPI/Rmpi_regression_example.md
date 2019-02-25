@@ -77,11 +77,11 @@ for(i in 1:4){
 
 ### 3. console 결과 창
 
-![console image](https://github.com/SeungHwan-AN/ML_study/blob/master/MPI/rmpi_regression_console.png)
+![console image](https://github.com/SeungHwan-AN/ML_study/blob/master/MPI/images/rmpi_regression_console.png)
 
 * 1회 통신(send or receive)에 0.15초 정도 걸리는 것을 확인할 수 있다
     - R code에서 통신이 이루어지는 while문이 10번 반복하기 때문
 
 ### 4. regression result csv file
 
-![csv file](https://github.com/SeungHwan-AN/ML_study/blob/master/MPI/rmpi_regression_result.PNG)
+![csv file](https://github.com/SeungHwan-AN/ML_study/blob/master/MPI/images/rmpi_regression_result.PNG)
