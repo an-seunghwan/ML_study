@@ -13,14 +13,14 @@ mpi.spawn.Rslaves(nslaves = mpi.universe.size() - 1)
   }
 }
 
-beta = rep(0,3)
+beta = rep(0,10)
 gamma = 1
 
 slavefunction_reg = function(data, beta)
 {
-  x = data[,1:3]
-  y = data[,4]
-  for(i in 1:1000)
+  x = data[,1:10]
+  y = data[,11]
+  for(i in 1:10)
   {
     gradient = t(x) %*% (y - x%*%beta)/length(y)
     beta = beta + gamma * gradient
@@ -32,12 +32,12 @@ mpi.bcast.Robj2slave(slavefunction_reg)
 mpi.bcast.Robj2slave(beta)
 mpi.bcast.Robj2slave(gamma)
 
-mpi.bcast.cmd(cmd = assign(paste("testdata", mpi.comm.rank(), sep=""), as.matrix(read.csv(file = paste("/home/user/data", mpi.comm.rank(), "_mpi.csv", sep=""), header = T))))
+mpi.bcast.cmd(cmd = assign(paste("new_testdata", mpi.comm.rank(), sep=""), as.matrix(read.csv(file = paste("/home/user/new_data", mpi.comm.rank(), "_mpi.csv", sep=""), header = T))))
 i = 1
-while(i <= 10)
+while(i <= 100)
 {
-  beta_list = mpi.remote.exec(cmd = slavefunction_reg(get(paste("testdata", mpi.comm.rank(), sep="")), beta))
-  beta_vec = matrix(0, 3, 1)
+  beta_list = mpi.remote.exec(cmd = slavefunction_reg(get(paste("new_testdata", mpi.comm.rank(), sep="")), beta))
+  beta_vec = matrix(0, 10, 1)
   for(k in 1 : (mpi.comm.size() - 1)){
     beta_vec = beta_vec + as.matrix(beta_list[[k]])
   }
@@ -47,7 +47,7 @@ while(i <= 10)
   i = i + 1
 }
 
-write.csv(beta, file = "/home/user/beta_result2.csv",row.names = F)
+write.csv(beta, file = "/home/user/beta_result.csv",row.names = F)
 
 mpi.close.Rslaves()
 end_time = Sys.time()
