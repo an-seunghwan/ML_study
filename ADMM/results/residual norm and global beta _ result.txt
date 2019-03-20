@@ -1,3 +1,5 @@
+# final number of epochs
+= 301
 # primal residual
 > norm((r), "F")
 [1] 0.0001610717
