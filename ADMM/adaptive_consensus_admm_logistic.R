@@ -85,7 +85,7 @@ slavefunction = function(index)
   {
     # computing gradient
       grad = -matrix((t(y) %*% x) / (global_objs$n / k), global_objs$p, 1) + (t(x) %*% (1 / (1 + exp(-x %*% b)))) / (global_objs$n / k) +
-        global_objs$penalty_vec[index] * matrix(-global_beta + b + dual / global_objs$penalty_vec[index], global_objs$p, 1)
+        global_objs$penalty_vec[index] * matrix(global_beta - b + dual / global_objs$penalty_vec[index], global_objs$p, 1)
     # update local beta
     b = b - global_objs$eta * grad
     # checking stopping criteria
@@ -106,13 +106,13 @@ for(t in 1:epochs)
   }
   # update global beta
   sum = rep(0, p)
-  for(i in 1:k) sum = sum + updated_local_beta[[i]] + local_dual[[i]] / global_objs$penalty_vec[i]
+  for(i in 1:k) sum = sum + updated_local_beta[[i]] - local_dual[[i]] / global_objs$penalty_vec[i]
   old_beta = global_beta
   global_beta = sum / k
   fwrite(as.matrix(global_beta), file = paste('C:/Users/dpelt/r_default/admm_adaptive_beta/beta', t, '.csv', sep=""))
   # update local dual
   updated_local_dual = list()
-  for(i in 1:k) updated_local_dual[[i]] = local_dual[[i]] + global_objs$penalty_vec[i] * (-global_beta + updated_local_beta[[i]])
+  for(i in 1:k) updated_local_dual[[i]] = local_dual[[i]] + global_objs$penalty_vec[i] * (global_beta - updated_local_beta[[i]])
   if(t %% T_f == 0)
   {
     dual_hat = list()
