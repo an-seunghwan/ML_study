@@ -15,7 +15,7 @@ p = 10
 X = matrix(rnorm(n*p, mean = 1, sd = 3), nrow = n)
 X_scaled = scale(X)
 y = rnorm(n, mean = 1, sd = 3)
-y_scaled = scale(y)
+y_scaled = y - mean(y)
 
 # LARS function
 lars_function = function(X_scaled, y_scaled, plotting = F) {
