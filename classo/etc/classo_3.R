@@ -1,28 +1,11 @@
 rm(list = ls())
 gc()
-# if(!require("convexjlr")) install.packages("convexjlr")
-# library("convexjlr")
-# if(!require("ECOSolveR")) install.packages("ECOSolveR")
-# library("ECOSolveR")
-# if(!require("cccp")) install.packages("cccp")
-# library("cccp")
-# if(!require("lpSolve")) install.packages("lpSolve")
-# library("lpSolve")
+#
+setwd("C:/Users/dpelt/OneDrive - 서울시립대학교/Documents/GitHub/ML_study/classo")
+source("find_rho_max.R")
+source("constrsparsereg.R")
 if(!require("CVXR")) install.packages("CVXR")
 library("CVXR")
-# if(!require("rapportools")) install.packages("rapportools")
-# library("rapportools")
-# if(!require("stringr")) install.packages("stringr")
-# library("stringr")
-# julia <- julia_setup()
-# convex_setup()
-
-#####################################################
-# 첫번째 case에 대한 문제를 푼다
-#####################################################
-### set up
-n = 100
-p = 20
 
 ### truth with sum constrant sum(beta) = 0
 # β = zeros(p)
@@ -31,15 +14,18 @@ p = 20
 # β[(round(Int, p / 2) + 1):round(Int, 3p / 4)] = 0
 # β[(round(Int, 3p / 4) + 1):p] = -1
 
-### generate data
+### generate data - normalize된 data 사용
 X=as.matrix(read.csv("C:/Julia/classo/src/X1.csv", header = F)) # n * p
 y=as.matrix(read.csv("C:/Julia/classo/src/y1.csv", header = F)) # n
+
+n = dim(X)[1]
+p = dim(X)[2]
 
 ### equality constraints
 Aeq = matrix(rep(1, p), nrow = 1) # 1×20 Array{Frhoat64,2}
 beq = matrix(0, nrow = 1) # 1-element Array{Frhoat64,1}
 # Aeq = matrix(1, nrow = 2, p); Aeq[1,11:20] = 0 ;   Aeq[2,1:10] = 0
-# beq = matrix(0, nrow = 2, 1) # 1-element Array{Frhoat64,1}
+# beq = matrix(0, nrow = 2, 1) 
 
 penwt = rep(1, p) # 20-element Array{Frhoat64,1}
 
@@ -62,9 +48,6 @@ bineq = rep(0, dim(Aineq)[1])
 # ρridge :: Number = zero(T),
 # penidx :: Array{Bool} = fill(true, size(X, 2)),
 # solver = ECOSSolver(maxit=10e8, verbose=0)
-
-n = dim(X)[1]
-p = dim(X)[2]
 
 rho_ridge = 0
 penidx = rep(T, p)
@@ -119,8 +102,7 @@ H = t(X) %*% X
 
 # find the maximum ρ (starting value)
 l = find_rho_max()
-# rho_path[1] = l$rho_max
-rho_path[1] = 144.0489670
+rho_path[1] = l$rho_max
 idx = l$ind_rho_max
 
 # calculate at ρmax
@@ -132,14 +114,11 @@ result = l$result
 
 for(i in 1:min(2, length(problem@constraints))) {
   if(canonicalize(problem@constraints[[i]])[[2]][[1]]$class == "LinEqConstr") {
-    # lambda_patheq[, 1] = result$getDualValue(problem@constraints[[i]]) # 이거 값 다름 - 왜 0 나오지?*****
     lambda_patheq[, 1] = result$getDualValue(problem@constraints[[i]]) # 이거 값 다름 - 왜 0 나오지?***** (부호변경)
   } else if(canonicalize(problem@constraints[[i]])[[2]][[1]]$class == "LinLeqConstr") {
     mu_pathineq[, 1] = result$getDualValue(problem@constraints[[i]])
   }
 }
-
-lambda_patheq[, 1] = -7.1592458 # 강제로 값을 지정*****
 
 mu_pathineq[mu_pathineq < 0] = 0
 setActive = (abs(beta_path[, 1]) > 1e-4) | (!penidx)
@@ -149,7 +128,7 @@ residIneq = Aineq %*% beta_path[, 1] - bineq
 setIneqBorder = residIneq == 0
 nIneqBorder = sum(setIneqBorder != 0)
 
-# initialize subgradient vector
+# initialize subgradient vector (stationarity condition)
 resid = y - X %*% beta_path[, 1]
 if(neq > 0 & nineq > 0) {
   subgrad = t(X) %*% resid - t(Aeq) %*% lambda_patheq[ ,1] - t(Aineq) %*% mu_pathineq[, 1]
@@ -159,6 +138,7 @@ if(neq > 0 & nineq > 0) {
   subgrad = t(X) %*% resid - t(Aineq) %*% mu_pathineq[, 1]
 }
 
+# subgradient of beta
 subgrad[setActive] = sign(beta_path[setActive, 1])
 subgrad[!setActive] = subgrad[!setActive] / rho_path[1]
 setActive[idx] = T
@@ -171,14 +151,12 @@ df_path[1] = nActive - rankAeq - nIneqBorder
 # set initial violations counter to 0
 violation_path[1] = 0
 
-# sign for path direction (originally went both ways, but increasing was retired)
+# sign for path direction (originally went both ways, but increasing was retired -> only decreasing)
 dirsgn = -1
 
 ####################################
 ### main loop for path following ###
 ####################################
-
-k = 0
 
 for(k in 2:maxiters) {
   # classo_for(k)_part
@@ -196,12 +174,13 @@ for(k in 2:maxiters) {
   idxIneqBorder = which(setIneqBorder)
   
   # 여기 계산 불안정 - 제약조건이 1개만(등호 or 부등호) 있을 때*****
-  M = cbind(H[activeCoeffs, activeCoeffs], t(Aeq[, activeCoeffs, drop=F]), 
-            t(Aineq[setIneqBorder, activeCoeffs]))
+  M = cbind(H[activeCoeffs, activeCoeffs, drop=F], t(Aeq[, activeCoeffs, drop=F]), 
+            t(Aineq[setIneqBorder, activeCoeffs, drop=F]))
   M = rbind(M, matrix(rep(0, (neq + nIneqBorder) * dim(M)[2]), nrow = (neq + nIneqBorder)))
-  M[(nrow(M) - neq - nIneqBorder + 1):nrow(M), 1:nActive] = rbind(Aeq[, activeCoeffs], Aineq[idxIneqBorder, activeCoeffs])
+  M[(nrow(M) - neq - nIneqBorder + 1):nrow(M), 1:nActive] = rbind(Aeq[, activeCoeffs, drop=F], 
+                                                                  Aineq[idxIneqBorder, activeCoeffs, drop=F])
   
-  # calculate derivative
+  # calculate derivative (of beta, lambda, mu)
   tryCatch(
     expr = {
       dir = dirsgn * solve(M, rbind(matrix(subgrad[setActive], ncol = 1), matrix(rep(0, neq + nIneqBorder), ncol = 1)))
@@ -212,25 +191,28 @@ for(k in 2:maxiters) {
     }
   )
   
+  #
   if(any(is.nan(dir))) {
     dir = -(MASS::ginv(M) %*% rbind(subgrad[setActive], matrix(rep(0, neq + nIneqBorder), ncol = 1)))
   }
   
   # calculate the derivative for rho * subgradient
   # 여기 계산 불안정 - 제약조건이 1개만 있을 때*****
-  temp = cbind(H[inactiveCoeffs, activeCoeffs], t(Aeq[, inactiveCoeffs, drop=F]))
-  if(nineq == 0) {
-    dirSubgrad = - temp %*% dir
-  } else {
-    dirSubgrad = - cbind(temp, Aineq[idxIneqBorder, inactiveCoeffs]) %*% dir  
-  }
+  # temp = cbind(H[inactiveCoeffs, activeCoeffs], t(Aeq[, inactiveCoeffs, drop=F]))
+  # if(nineq == 0) {
+  #   dirSubgrad = - temp %*% dir
+  # } else {
+  #   dirSubgrad = - cbind(temp, t(Aineq[idxIneqBorder, inactiveCoeffs, drop=F])) %*% dir  
+  # }
+  dirSubgrad = - cbind(H[inactiveCoeffs, activeCoeffs, drop=F], t(Aeq[, inactiveCoeffs, drop=F]),
+                       t(Aineq[idxIneqBorder, inactiveCoeffs, drop=F])) %*% dir
   
   ### check additional events related to potential subgraient violations
   
   ## inactive coefficients moving too slowly
   # negative subgradient
   inactSlowNegIdx = which((1 * dirsgn - 1e-8) <= subgrad[!setActive] &
-                            subgrad[!setActive] <= (1 * dirsgn + 1e-8) &
+                            subgrad[!setActive] <= (1 * dirsgn + 1e-8) & # 매우 좁은 범위의 값으로 -1과 값 확인
                             1 * dirsgn < dirSubgrad)
   
   # positive subgradient
@@ -238,12 +220,12 @@ for(k in 2:maxiters) {
                             subgrad[!setActive] <= (-1 * dirsgn + 1e-8) &
                             -1 * dirsgn > dirSubgrad)
   
-  ## "active" coeficients estimated as 0 with potential sign mismatch #%
+  ## "active" coeficients estimated as 0 with "potential" sign mismatch #% ???
   # positive subgrad but negative derivative
   signMismatchPosIdx = which((0 - 1e-8) <= subgrad[setActive] &
-                               subgrad[setActive] <= (1 + 1e-8) &
-                               dirsgn * dir[1:nActive] <= (0 - 1e-8) &
-                               beta_path[activeCoeffs, k-1] == 0)
+                               subgrad[setActive] <= (1 + 1e-8) & # 처음 2 조건: beta가 양수임
+                               dirsgn * dir[1:nActive] <= (0 - 1e-8) & # 변화량: 음수
+                               beta_path[activeCoeffs, k-1] == 0) # 이전 beta: 0 
   
   # Negative subgradient but positive derivative
   signMismatchNegIdx = which((-1 - 1e-8) <= subgrad[setActive] &
@@ -254,13 +236,9 @@ for(k in 2:maxiters) {
   # reset violation counter (to avoid infinite loops)
   violateCounter = 0
   
-  print(sum(setActive))
-  
   # outer while loop for checking all conditions together
   while(length(inactSlowNegIdx) > 0 | length(inactSlowPosIdx) > 0 |
     length(signMismatchPosIdx) > 0 | length(signMismatchNegIdx) > 0) {
-    
-    # 총 4개의 while문이 들어갈 예정
     
     # monitor and fix condition 1 violations
     while(length(inactSlowNegIdx) > 0) {
@@ -278,10 +256,11 @@ for(k in 2:maxiters) {
       inactiveCoeffs = which(!setActive)
       idxIneqBorder = which(setIneqBorder)
       
-      M = cbind(H[activeCoeffs, activeCoeffs], Aeq[, activeCoeffs], 
-                t(Aineq[setIneqBorder, activeCoeffs]))
+      M = cbind(H[activeCoeffs, activeCoeffs, drop=F], t(Aeq[, activeCoeffs, drop=F]), 
+                t(Aineq[setIneqBorder, activeCoeffs, drop=F]))
       M = rbind(M, matrix(rep(0, (neq + nIneqBorder) * dim(M)[2]), nrow = (neq + nIneqBorder)))
-      M[(nrow(M) - neq - nIneqBorder + 1):nrow(M), 1:nActive] = rbind(Aeq[, activeCoeffs], Aineq[idxIneqBorder, activeCoeffs])
+      M[(nrow(M) - neq - nIneqBorder + 1):nrow(M), 1:nActive] = rbind(Aeq[, activeCoeffs, drop=F], 
+                                                                      Aineq[idxIneqBorder, activeCoeffs, drop=F])
       
       # calculate derivative
       tryCatch(
@@ -296,12 +275,14 @@ for(k in 2:maxiters) {
       
       # calculate the derivative for rho * subgradient
       # 여기 계산 불안정 - 제약조건이 1개만 있을 때*****
-      temp = cbind(H[inactiveCoeffs, activeCoeffs], Aeq[, inactiveCoeffs])
-      if(nineq == 0) {
-        dirSubgrad = - temp %*% dir
-      } else {
-        dirSubgrad = - cbind(temp, Aineq[idxIneqBorder, inactiveCoeffs]) %*% dir  
-      }
+      # temp = cbind(H[inactiveCoeffs, activeCoeffs], t(Aeq[, activeCoeffs, drop=F]))
+      # if(nineq == 0) {
+      #   dirSubgrad = - temp %*% dir
+      # } else {
+      #   dirSubgrad = - cbind(temp, Aineq[idxIneqBorder, inactiveCoeffs]) %*% dir  
+      # }
+      dirSubgrad = - cbind(H[inactiveCoeffs, activeCoeffs, drop=F], t(Aeq[, inactiveCoeffs, drop=F]),
+                           t(Aineq[idxIneqBorder, inactiveCoeffs, drop=F])) %*% dir
       
       ## Misc. housekeeping #%
       # check for violations again
@@ -354,10 +335,11 @@ for(k in 2:maxiters) {
       inactiveCoeffs = which(!setActive)
       idxIneqBorder = which(setIneqBorder)
       
-      M = cbind(H[activeCoeffs, activeCoeffs], Aeq[, activeCoeffs], 
-                t(Aineq[setIneqBorder, activeCoeffs]))
+      M = cbind(H[activeCoeffs, activeCoeffs, drop=F], t(Aeq[, activeCoeffs, drop=F]), 
+                t(Aineq[setIneqBorder, activeCoeffs, drop=F]))
       M = rbind(M, matrix(rep(0, (neq + nIneqBorder) * dim(M)[2]), nrow = (neq + nIneqBorder)))
-      M[(nrow(M) - neq - nIneqBorder + 1):nrow(M), 1:nActive] = rbind(Aeq[, activeCoeffs], Aineq[idxIneqBorder, activeCoeffs])
+      M[(nrow(M) - neq - nIneqBorder + 1):nrow(M), 1:nActive] = rbind(Aeq[, activeCoeffs, drop=F], 
+                                                                      Aineq[idxIneqBorder, activeCoeffs, drop=F])
       
       # calculate derivative
       tryCatch(
@@ -372,12 +354,14 @@ for(k in 2:maxiters) {
       
       # calculate the derivative for rho * subgradient
       # 여기 계산 불안정 - 제약조건이 1개만 있을 때*****
-      temp = cbind(H[inactiveCoeffs, activeCoeffs], Aeq[, inactiveCoeffs])
-      if(nineq == 0) {
-        dirSubgrad = - temp %*% dir
-      } else {
-        dirSubgrad = - cbind(temp, Aineq[idxIneqBorder, inactiveCoeffs]) %*% dir  
-      }
+      # temp = cbind(H[inactiveCoeffs, activeCoeffs], t(Aeq[, inactiveCoeffs, drop=F]))
+      # if(nineq == 0) {
+      #   dirSubgrad = - temp %*% dir
+      # } else {
+      #   dirSubgrad = - cbind(temp, Aineq[idxIneqBorder, inactiveCoeffs]) %*% dir  
+      # }
+      dirSubgrad = - cbind(H[inactiveCoeffs, activeCoeffs, drop=F], t(Aeq[, inactiveCoeffs, drop=F]),
+                           t(Aineq[idxIneqBorder, inactiveCoeffs, drop=F])) %*% dir
       
       ## Misc. housekeeping #%
       # check for violations again
@@ -429,10 +413,11 @@ for(k in 2:maxiters) {
       inactiveCoeffs = which(!setActive)
       idxIneqBorder = which(setIneqBorder)
       
-      M = cbind(H[activeCoeffs, activeCoeffs], Aeq[, activeCoeffs], 
-                t(Aineq[setIneqBorder, activeCoeffs]))
+      M = cbind(H[activeCoeffs, activeCoeffs, drop=F], t(Aeq[, activeCoeffs, drop=F]), 
+                t(Aineq[setIneqBorder, activeCoeffs, drop=F]))
       M = rbind(M, matrix(rep(0, (neq + nIneqBorder) * dim(M)[2]), nrow = (neq + nIneqBorder)))
-      M[(nrow(M) - neq - nIneqBorder + 1):nrow(M), 1:nActive] = rbind(Aeq[, activeCoeffs], Aineq[idxIneqBorder, activeCoeffs])
+      M[(nrow(M) - neq - nIneqBorder + 1):nrow(M), 1:nActive] = rbind(Aeq[, activeCoeffs, drop=F], 
+                                                                      Aineq[idxIneqBorder, activeCoeffs, drop=F])
       
       # calculate derivative
       tryCatch(
@@ -447,12 +432,14 @@ for(k in 2:maxiters) {
       
       # calculate the derivative for rho * subgradient
       # 여기 계산 불안정 - 제약조건이 1개만 있을 때*****
-      temp = cbind(H[inactiveCoeffs, activeCoeffs], Aeq[, inactiveCoeffs])
-      if(nineq == 0) {
-        dirSubgrad = - temp %*% dir
-      } else {
-        dirSubgrad = - cbind(temp, Aineq[idxIneqBorder, inactiveCoeffs]) %*% dir  
-      }
+      # temp = cbind(H[inactiveCoeffs, activeCoeffs], t(Aeq[, activeCoeffs, drop=F]))
+      # if(nineq == 0) {
+      #   dirSubgrad = - temp %*% dir
+      # } else {
+      #   dirSubgrad = - cbind(temp, Aineq[idxIneqBorder, inactiveCoeffs]) %*% dir  
+      # }
+      dirSubgrad = - cbind(H[inactiveCoeffs, activeCoeffs, drop=F], t(Aeq[, inactiveCoeffs, drop=F]),
+                           t(Aineq[idxIneqBorder, inactiveCoeffs, drop=F])) %*% dir
       
       ## Misc. housekeeping #%
       # check for violations again
@@ -497,10 +484,11 @@ for(k in 2:maxiters) {
       inactiveCoeffs = which(!setActive)
       idxIneqBorder = which(setIneqBorder)
       
-      M = cbind(H[activeCoeffs, activeCoeffs], Aeq[, activeCoeffs], 
-                t(Aineq[setIneqBorder, activeCoeffs]))
+      M = cbind(H[activeCoeffs, activeCoeffs, drop=F], t(Aeq[, activeCoeffs, drop=F]), 
+                t(Aineq[setIneqBorder, activeCoeffs, drop=F]))
       M = rbind(M, matrix(rep(0, (neq + nIneqBorder) * dim(M)[2]), nrow = (neq + nIneqBorder)))
-      M[(nrow(M) - neq - nIneqBorder + 1):nrow(M), 1:nActive] = rbind(Aeq[, activeCoeffs], Aineq[idxIneqBorder, activeCoeffs])
+      M[(nrow(M) - neq - nIneqBorder + 1):nrow(M), 1:nActive] = rbind(Aeq[, activeCoeffs, drop=F], 
+                                                                      Aineq[idxIneqBorder, activeCoeffs, drop=F])
       
       # calculate derivative
       tryCatch(
@@ -515,12 +503,14 @@ for(k in 2:maxiters) {
       
       # calculate the derivative for rho * subgradient
       # 여기 계산 불안정 - 제약조건이 1개만 있을 때*****
-      temp = cbind(H[inactiveCoeffs, activeCoeffs], Aeq[, inactiveCoeffs])
-      if(nineq == 0) {
-        dirSubgrad = - temp %*% dir
-      } else {
-        dirSubgrad = - cbind(temp, Aineq[idxIneqBorder, inactiveCoeffs]) %*% dir  
-      }
+      # temp = cbind(H[inactiveCoeffs, activeCoeffs], t(Aeq[, activeCoeffs, drop=F]))
+      # if(nineq == 0) {
+      #   dirSubgrad = - temp %*% dir
+      # } else {
+      #   dirSubgrad = - cbind(temp, Aineq[idxIneqBorder, inactiveCoeffs]) %*% dir  
+      # }
+      dirSubgrad = - cbind(H[inactiveCoeffs, activeCoeffs, drop=F], t(Aeq[, inactiveCoeffs, drop=F]),
+                           t(Aineq[idxIneqBorder, inactiveCoeffs, drop=F])) %*% dir
       
       ## Misc. housekeeping #%
       # check for violations again
@@ -575,7 +565,6 @@ for(k in 2:maxiters) {
     }
   }
   
-  # after all while loop
   ###### after all while loop
   
   # store number of violations
@@ -586,9 +575,9 @@ for(k in 2:maxiters) {
   inactiveCoeffs = which(!setActive)
   idxIneqBorder = which(setIneqBorder)
   
-  dirResidIneq = Aineq[which(!setIneqBorder), activeCoeffs] %*% dir[1:nActive] # 계산 불안정*****
+  dirResidIneq = Aineq[which(!setIneqBorder), activeCoeffs, drop=F] %*% dir[1:nActive] # 계산 불안정*****
   
-  ### Determine rho for next event (via delta rho) ###%
+  ### Determine rho for next event (via delta rho) ###% ?????
   ## Events based on coefficients changing activation status ##%
   next_rho_beta = matrix(rep(Inf, p), ncol = 1)
   
@@ -673,18 +662,20 @@ for(k in 2:maxiters) {
   residIneq = Aineq * beta_path[, k] - bineq
   
   ## update sets ##%
-  for(j in 1:length(idx)) {
-    curidx = idx[j]
-    if(curidx <= p & setActive[curidx]) {
-      # an active coefficient hits 0, or
-      setActive[curidx] = F
-    } else if(curidx <= p & !setActive[curidx]) {
-      # a zero coefficient becomes nonzero
-      setActive[curidx] = T
-    } else if(curidx > p) {
-      # an ineq on boundary becomes strict, or
-      # a strict ineq hits boundary
-      setIneqBorder[curidx - p] = !setIneqBorder[curidx - p]
+  if(length(idx) > 0) {
+    for(j in 1:length(idx)) {
+      curidx = idx[j]
+      if(curidx <= p & setActive[curidx]) {
+        # an active coefficient hits 0, or
+        setActive[curidx] = F
+      } else if(curidx <= p & !setActive[curidx]) {
+        # a zero coefficient becomes nonzero
+        setActive[curidx] = T
+      } else if(curidx > p) {
+        # an ineq on boundary becomes strict, or
+        # a strict ineq hits boundary
+        setIneqBorder[curidx - p] = !setIneqBorder[curidx - p]
+      }
     }
   }
   
@@ -708,7 +699,14 @@ for(k in 2:maxiters) {
   # end of big for loop
 }
 
+beta_path = beta_path[, 1:k-1]
+rho_path = rho_path[1:k-1]
+objval_path = objval_path[1:k-1]
+df_path = df_path[1:k-1]
+df_path[df_path < 0] = 0
 
+# result
+cat("Test: sum of beta < 1e-6 =", sum(beta_path[, k-1]) < 1e-6, "\n")
 
 
 

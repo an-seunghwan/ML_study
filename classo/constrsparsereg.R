@@ -3,12 +3,15 @@
 # subject to linear constraints, using `Convex.jl`.
 
 ################################################################
-constrsparsereg = function(rho,
+constrsparsereg = function(X, y, Aeq, beq, Aineq, bineq,
+                           rho,
                            obswt = matrix(rep(1, n), nrow = n),
                            penwt, 
                            warmstart = F) {
   n = dim(X)[1]
   p = dim(X)[2]
+  neq = dim(Aeq)[1]
+  nineq = dim(Aineq)[1]
   
   # function 인자값 setting
   # penwt = penidx
@@ -26,7 +29,7 @@ constrsparsereg = function(rho,
     constraints = list(Aeq %*% beta == beq, Aineq %*% beta <= bineq)
   } else if(neq > 0 & nineq == 0) {
     constraints = list(Aeq %*% beta == beq)
-  } else if(neq == 0 & nieq > 0) {
+  } else if(neq == 0 & nineq > 0) {
     constraints = list(Aineq %*% beta <= bineq)
   }
   

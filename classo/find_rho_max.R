@@ -8,8 +8,10 @@
 # penidx::Array{Bool} = fill(true, size(X, 2)),
 # solver = ECOSSolver(maxit=10e8, verbose=0)
 
-find_rho_max = function() { # grhobal variable로 처리한다면
+find_rho_max = function(X, y, Aeq, beq, Aineq, bineq, penidx) { # global variable로 처리한다면
   p = dim(X)[2]
+  neq = dim(Aeq)[1]
+  nineq = dim(Aineq)[1]
   
   x = Variable(p)
   objective = Minimize(sum_entries(abs(x))) # sum_entries!
@@ -17,7 +19,7 @@ find_rho_max = function() { # grhobal variable로 처리한다면
     constraints = list(Aeq %*% x == beq, Aineq %*% x <= bineq)
   } else if(neq > 0 & nineq == 0) {
     constraints = list(Aeq %*% x == beq)
-  } else if(neq == 0 & nieq > 0) {
+  } else if(neq == 0 & nineq > 0) {
     constraints = list(Aineq %*% x <= bineq)
   }
    
