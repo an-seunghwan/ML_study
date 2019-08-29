@@ -4,9 +4,7 @@ gc()
 #
 setwd("C:/Users/dpelt/OneDrive - 서울시립대학교/Documents/GitHub/ML_study/classo")
 source("classopath_init.R")
-source("constrsparsereg.R")
-source("classopath_all.R")
-source("classopath_one.R")
+source("classopath3.R")
 if(!require("CVXR")) install.packages("CVXR")
 library("CVXR")
 
@@ -19,9 +17,9 @@ library("CVXR")
 set.seed(520)
 
 # setting
-n = 500
-p = 20
-m = 10
+n = 100
+p = 10
+m = 5
 
 # data
 X = matrix(rnorm(n*p), nrow = n)
@@ -35,26 +33,13 @@ y = y - mean(y)
 n = dim(X)[1]
 p = dim(X)[2]
 
-#
-# X = data.matrix(longley[, 1:6])
-# n = dim(X)[1]
-# p = dim(X)[2]
-# y = data.matrix(longley[, 7])
-# X.m = apply(X, 2, mean)
-# X.m = matrix(X.m, nrow = n, ncol = p, byrow = T)
-# X = X - X.m
-# y = y - mean(y)
-# m = 3
-
-# n = dim(X)[1]
-# p = dim(X)[2]
-
 ### equality constraints
 # default
 # Aeq = matrix(0, nrow = 0, ncol = dim(X)[2])
 # beq = rep(0, dim(Aeq)[1])
 # use
-Aeq = matrix(sample(seq(-2, 2, by = 1), m * p, replace = T), nrow = m)
+# Aeq = matrix(sample(seq(-1, 1, by = 1), m * p, replace = T), nrow = m)
+Aeq = matrix(rnorm(m*p, 0, 1), nrow = m)
 beq = matrix(rep(0, m), nrow = m)
 
 ### inequality constraints
@@ -68,51 +53,48 @@ bineq = rep(0, dim(Aineq)[1])
 # penalty weight
 penwt = rep(1, p) # 20-element Array{Frhoat64,1}
 
+##################################################################################
 # 1. init 단계에서 violation된 모든 beta를 activate 하는 경우
-result_all = classopath_all(X, y, Aeq, beq, Aineq, bineq, penwt)
+result_all = classopath_modified(X, y, Aeq, beq, Aineq, bineq, penwt, choose_one = F)
 
 # result
 cat("Test: ", abs(Aeq %*% result_all$beta_path[, result_all$steps]), "\n")
 beta_all = result_all$beta_path[, result_all$steps]
 
 # plot
-beta_max = max(result_all$beta_path)
-beta_min = min(result_all$beta_path)
-sum_abs_beta = apply(abs(result_all$beta_path), 2, sum)
-#
 # par(mfrow = c(1,1))
 # plot(sum_abs_beta, result_all$beta_path[1, ], ylim = c(beta_min, beta_max), type = 'l', col = 1, lwd = 2,
 #      xlab = "sum(abs(beta))", ylab = "beta", main = 'BETA coefs PATH(Constrained LASSO) case one')
-# for(i in 2:p) points(sum_abs_beta, result_all$beta_path[i, ], type = 'l', col = i, lwd = 2)
-#
+# for(i in 2:p) points(apply(abs(result_all$beta_path), 2, sum), result_all$beta_path[i, ], type = 'l', col = i, lwd = 2)
+
 par(mfrow = c(1,1))
-plot(seq(1, result_all$steps), result_all$beta_path[1, ], ylim = c(beta_min, beta_max), type = 'l', col = 1, lwd = 2,
-     xlab = "steps", ylab = "beta", main = 'BETA coefs PATH(Constrained LASSO) case one')
+plot(seq(1, result_all$steps), result_all$beta_path[1, ], 
+     ylim = c(min(result_all$beta_path), max(result_all$beta_path)), type = 'l', col = 1, lwd = 2,
+     xlab = "steps", ylab = "beta", main = 'BETA coefs PATH(Constrained LASSO) all')
 for(i in 2:p) points(seq(1, result_all$steps), result_all$beta_path[i, ], type = 'l', col = i, lwd = 2)
 
+###############################################################################
 # 2. init 단계에서 초기 잔차와 가장 correlation이 높은 predictor 1개만을 선택
-result_one = classopath_one(X, y, Aeq, beq, Aineq, bineq, penwt)
+result_one = classopath_modified(X, y, Aeq, beq, Aineq, bineq, penwt, choose_one = T)
 
 # result
 cat("Test: ", abs(Aeq %*% result_one$beta_path[, result_one$steps]), "\n")
 beta_one = result_one$beta_path[, result_one$steps]
 
 # plot
-beta_max = max(result_one$beta_path)
-beta_min = min(result_one$beta_path)
-sum_abs_beta = apply(abs(result_one$beta_path), 2, sum)
-#
 # par(mfrow = c(1,1))
 # plot(sum_abs_beta, result_one$beta_path[1, ], ylim = c(beta_min, beta_max), type = 'l', col = 1, lwd = 2,
 #      xlab = "sum(abs(beta))", ylab = "beta", main = 'BETA coefs PATH(Constrained LASSO) case two')
-# for(i in 2:p) points(sum_abs_beta, result_one$beta_path[i, ], type = 'l', col = i, lwd = 2)
-#
+# for(i in 2:p) points(apply(abs(result_one$beta_path), 2, sum), result_one$beta_path[i, ], type = 'l', col = i, lwd = 2)
+
 par(mfrow = c(1,1))
-plot(seq(1, result_one$steps), result_one$beta_path[1, ], ylim = c(beta_min, beta_max), type = 'l', col = 1, lwd = 2,
-     xlab = "steps", ylab = "beta", main = 'BETA coefs PATH(Constrained LASSO) case two')
+plot(seq(1, result_one$steps), result_one$beta_path[1, ], 
+     ylim = c(min(result_one$beta_path), max(result_one$beta_path)), type = 'l', col = 1, lwd = 2,
+     xlab = "steps", ylab = "beta", main = 'BETA coefs PATH(Constrained LASSO) one')
 for(i in 2:p) points(seq(1, result_one$steps), result_one$beta_path[i, ], type = 'l', col = i, lwd = 2)
 
-#
+############################################################################
+# compare
 par(mfrow = c(1,1))
 min = min(beta_all, beta_one)
 max = max(beta_all, beta_one)
@@ -122,9 +104,22 @@ plot(seq(1, max_step), ylim = c(min, max), type = 'l', col = 1, lwd = 2,
 for(i in 1:p) points(seq(1, result_all$steps), result_all$beta_path[i, ], type = 'l', col = 1, lwd = 2)
 for(i in 1:p) points(seq(1, result_one$steps), result_one$beta_path[i, ], type = 'l', col = 2, lwd = 2, lty = 2)
 
-# compare
-plot(beta_all - beta_one, ylim = c(-1, 1), type = "h")
+#
+plot(beta_all - beta_one, ylim = c(-0.1, 0.1), type = "h")
+beta_all - beta_one
 beta_all
 beta_one
 # exactly same solution
-# KKT condition, subgradient rule, sign mismatch 검사만 제대로 하면 맨처음 active set은 상관 없음
+
+#
+t(Aeq)
+sum(abs(Aeq %*% result_all$beta_path[, result_all$steps])) # all
+sum(abs(Aeq %*% result_one$beta_path[, result_one$steps])) # one
+result_all$beta_path
+result_one$beta_path
+##################################################################################################
+# KKT condition, subgradient rule, sign mismatch 검사만 제대로 하면 맨처음 active set은 상관 없음#
+# 왜냐면 첫번째 업데이트 이전에 검사하게 되면 active set이 동일해짐
+# 한번씩 필요한 step가 다른 것 빼고는 동일
+# BUT 제약조건을 만족시키는 정도에서 차이남, 근데 완전 같을때도 있음
+##################################################################################################

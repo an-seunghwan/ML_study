@@ -72,7 +72,8 @@ init_path = function(X, y, Aeq, beq) {
   activeset = sort(union(idx1, idx2))
   
   # full rank check
-  flag = Matrix::rankMatrix(t(Aeq)[activeset, ]) == ncol(t(Aeq)[activeset, ])
+  flag = T
+  if(dim(Aeq)[1] > 1) flag = Matrix::rankMatrix(t(Aeq)[activeset, ]) == ncol(t(Aeq)[activeset, ])
   
   return(list(rho_max = rho_max,
               lambda_max = lambda_max,
