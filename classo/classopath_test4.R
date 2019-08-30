@@ -17,7 +17,7 @@ library("CVXR")
 set.seed(520)
 
 # setting
-n = 100
+n = 200
 p = 10
 m = 5
 
@@ -39,7 +39,7 @@ p = dim(X)[2]
 # beq = rep(0, dim(Aeq)[1])
 # use
 # Aeq = matrix(sample(seq(-1, 1, by = 1), m * p, replace = T), nrow = m)
-Aeq = matrix(rnorm(m*p, 0, 1), nrow = m)
+Aeq = matrix(rnorm(m*p, 1, 1), nrow = m)
 beq = matrix(rep(0, m), nrow = m)
 
 ### inequality constraints
@@ -96,8 +96,8 @@ for(i in 2:p) points(seq(1, result_one$steps), result_one$beta_path[i, ], type =
 ############################################################################
 # compare
 par(mfrow = c(1,1))
-min = min(beta_all, beta_one)
-max = max(beta_all, beta_one)
+min = min(result_all$beta_path, result_one$beta_path)
+max = max(result_all$beta_path, result_one$beta_path)
 max_step = max(result_all$steps, result_one$steps)
 plot(seq(1, max_step), ylim = c(min, max), type = 'l', col = 1, lwd = 2,
      xlab = "steps", ylab = "beta", main = 'BETA coefs PATH(Constrained LASSO) compare')

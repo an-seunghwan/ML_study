@@ -1,3 +1,59 @@
+# rm(list = ls())
+# gc()
+# 
+# #
+# setwd("C:/Users/dpelt/OneDrive - 서울시립대학교/Documents/GitHub/ML_study/classo")
+# source("classopath_init.R")
+# # source("classopath3.R")
+# if(!require("CVXR")) install.packages("CVXR")
+# library("CVXR")
+# 
+# #############################################################################
+# # Calculate the solution path of the constrained lasso problem that minimizes
+# # `0.5sumabs2(√obswt .* (y - X * β)) + ρ * sumabs(penwt .* β)`
+# # subject to linear constraints.
+# #############################################################################
+# 
+# set.seed(520)
+# 
+# # setting
+# n = 200
+# p = 10
+# m = 5
+# 
+# # data
+# X = matrix(rnorm(n*p), nrow = n)
+# X.m = apply(X, 2, mean)
+# X.m = matrix(X.m, nrow = n, ncol = p, byrow = T)
+# X = X - X.m
+# true_b = rep(1, p)
+# y = X %*% true_b + rnorm(n)
+# y = y - mean(y)
+# 
+# n = dim(X)[1]
+# p = dim(X)[2]
+# 
+# ### equality constraints
+# # default
+# # Aeq = matrix(0, nrow = 0, ncol = dim(X)[2])
+# # beq = rep(0, dim(Aeq)[1])
+# # use
+# # Aeq = matrix(sample(seq(-1, 1, by = 1), m * p, replace = T), nrow = m)
+# Aeq = matrix(rnorm(m*p, 1, 1), nrow = m)
+# beq = matrix(rep(0, m), nrow = m)
+# 
+# ### inequality constraints
+# # default
+# Aineq = matrix(0, nrow = 0, ncol = dim(X)[2])
+# bineq = rep(0, dim(Aineq)[1])
+# # use 
+# # Aineq = -diag(rep(1, p))
+# # bineq = rep(0, p)
+# 
+# # penalty weight
+# penwt = rep(1, p) # 20-element Array{Frhoat64,1}
+# choose_one = F
+
 classopath_modified = function(X, y, Aeq, beq, Aineq, bineq,
                       penwt = rep(1, p),
                       rho_ridge = 0,
