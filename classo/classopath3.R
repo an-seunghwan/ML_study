@@ -46,12 +46,13 @@
 # # default
 # Aineq = matrix(0, nrow = 0, ncol = dim(X)[2])
 # bineq = rep(0, dim(Aineq)[1])
-# # use 
+# # use
 # # Aineq = -diag(rep(1, p))
 # # bineq = rep(0, p)
 # 
 # # penalty weight
 # penwt = rep(1, p) # 20-element Array{Frhoat64,1}
+# penidx = rep(T, p)
 # choose_one = F
 
 classopath_modified = function(X, y, Aeq, beq, Aineq, bineq,
@@ -112,17 +113,19 @@ classopath_modified = function(X, y, Aeq, beq, Aineq, bineq,
   if(!l$flag) return(0) # check lambda is unique
   setActive = matrix(rep(F, p), ncol = 1)
   setActive[l$activeset, ] = T
+  nActive = sum(setActive != 0)
   
-  #
+  # pick one?
   if(choose_one == T) {
     # choose one predictor most correlated
     setActive = matrix(rep(F, p), ncol = 1)
     idx = l$activeset[which.max(t(X[, l$activeset]) %*% y)]
     setActive[idx, ] = T
+    nActive = sum(setActive != 0)
   }
   
   beta_path[, 1] = 0
-  objval_path[1] = sum(t(X) %*% y) / 2 # beta is zero
+  objval_path[1] = sum(t(X) %*% y) / 2 # init_beta is zero
   
   #
   mu_pathineq[mu_pathineq < 0] = 0
@@ -144,7 +147,6 @@ classopath_modified = function(X, y, Aeq, beq, Aineq, bineq,
   # subgrad[setActive] = sign(beta_path[setActive, 1])
   # subgrad[!setActive] = subgrad[!setActive] / rho_path[1]
   subgrad = subgrad / rho_path[1] # 처음에는 beta가 다 0이니까 sign말고 직접 계산?
-  nActive = sum(setActive != 0)
   
   # calculate degrees of freedom
   # rankAeq = Matrix::rankMatrix(Aeq) ### Brian's comment: need to make it more efficient
@@ -605,7 +607,7 @@ classopath_modified = function(X, y, Aeq, beq, Aineq, bineq,
       for(j in 1:length(idx)) {
         curidx = idx[j]
         if(curidx <= p & setActive[curidx]) {
-          # an active coefficient hits 0, or
+          # an active coefficient hits 0
           setActive[curidx] = F
         } else if(curidx <= p & !setActive[curidx]) {
           # a zero coefficient becomes nonzero

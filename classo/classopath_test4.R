@@ -62,10 +62,11 @@ cat("Test: ", abs(Aeq %*% result_all$beta_path[, result_all$steps]), "\n")
 beta_all = result_all$beta_path[, result_all$steps]
 
 # plot
-# par(mfrow = c(1,1))
-# plot(sum_abs_beta, result_all$beta_path[1, ], ylim = c(beta_min, beta_max), type = 'l', col = 1, lwd = 2,
-#      xlab = "sum(abs(beta))", ylab = "beta", main = 'BETA coefs PATH(Constrained LASSO) case one')
-# for(i in 2:p) points(apply(abs(result_all$beta_path), 2, sum), result_all$beta_path[i, ], type = 'l', col = i, lwd = 2)
+par(mfrow = c(1,1))
+plot(apply(abs(result_all$beta_path), 2, sum), result_all$beta_path[1, ], 
+           ylim = c(min(result_all$beta_path), max(result_all$beta_path)), type = 'l', col = 1, lwd = 2,
+     xlab = "sum(abs(beta))", ylab = "beta", main = 'BETA coefs PATH(Constrained LASSO) case one')
+for(i in 2:p) points(apply(abs(result_all$beta_path), 2, sum), result_all$beta_path[i, ], type = 'l', col = i, lwd = 2)
 
 par(mfrow = c(1,1))
 plot(seq(1, result_all$steps), result_all$beta_path[1, ], 
@@ -82,10 +83,11 @@ cat("Test: ", abs(Aeq %*% result_one$beta_path[, result_one$steps]), "\n")
 beta_one = result_one$beta_path[, result_one$steps]
 
 # plot
-# par(mfrow = c(1,1))
-# plot(sum_abs_beta, result_one$beta_path[1, ], ylim = c(beta_min, beta_max), type = 'l', col = 1, lwd = 2,
-#      xlab = "sum(abs(beta))", ylab = "beta", main = 'BETA coefs PATH(Constrained LASSO) case two')
-# for(i in 2:p) points(apply(abs(result_one$beta_path), 2, sum), result_one$beta_path[i, ], type = 'l', col = i, lwd = 2)
+par(mfrow = c(1,1))
+plot(apply(abs(result_one$beta_path), 2, sum), result_one$beta_path[1, ], 
+     ylim = c(min(result_one$beta_path), max(result_one$beta_path)), type = 'l', col = 1, lwd = 2,
+     xlab = "sum(abs(beta))", ylab = "beta", main = 'BETA coefs PATH(Constrained LASSO) case two')
+for(i in 2:p) points(apply(abs(result_one$beta_path), 2, sum), result_one$beta_path[i, ], type = 'l', col = i, lwd = 2)
 
 par(mfrow = c(1,1))
 plot(seq(1, result_one$steps), result_one$beta_path[1, ], 
