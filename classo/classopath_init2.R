@@ -7,8 +7,8 @@ source("classopath_init.R")
 source("classopath3.R")
 if(!require("CVXR")) install.packages("CVXR")
 library("CVXR")
-if(!require("cape")) install.packages("cape")
-library("cape")
+# if(!require("cape")) install.packages("cape")
+# library("cape")
 
 #############################################################################
 # Calculate the solution path of the constrained lasso problem that minimizes
@@ -94,6 +94,7 @@ subgrad = - t(X) %*% resid - t(Aeq) %*% lambda_patheq[ ,1]
 Aeq[, l$activeset]
 l$activeset
 setB = c(1,2,3,5,9)
+setB = l$activeset
 
 # Matrix::rankMatrix(Aeq[, l$activeset])
 Aeq[, setB]
