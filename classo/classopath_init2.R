@@ -110,7 +110,7 @@ delta_beta_lambda = MASS::ginv(M) %*% rbind(subgrad[new_setActive, ,drop=F] / rh
 delta_beta = delta_beta_lambda[1:sum(new_setActive), ,drop=F]
 delta_lambda = delta_beta_lambda[(sum(new_setActive)+1):nrow(delta_beta_lambda), ,drop=F]
 
-# 
+###############################################################################################
 t(X[, new_setActive]) %*% X[, new_setActive]
 t(Aeq[, new_setActive]) %*% solve(diag(rep(.Machine$double.eps, neq))) %*% Aeq[, new_setActive]
 t(X[, new_setActive]) %*% X[, new_setActive] - 
