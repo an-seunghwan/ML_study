@@ -12,9 +12,9 @@ library("CVXR")
 set.seed(520)
 
 # setting
-n = 500
-p = 20
-m = 7
+n = 100
+p = 10
+m = 5
 
 # data
 X = matrix(rnorm(n*p), nrow = n)
@@ -35,7 +35,7 @@ p = dim(X)[2]
 # use
 # Aeq = matrix(sample(seq(-1, 1, by = 1), m * p, replace = T), nrow = m)
 # Aeq = matrix(sample(c(1,2,0), m * p, replace = T), nrow = m)
-Aeq = matrix(rnorm(m*p, 1, 1), nrow = m)
+Aeq = matrix(rnorm(m*p, 0, 1), nrow = m)
 # Aeq = matrix(c(1,1,1,0,0,0,1,1,1,0,
 # -1,-1,-1,0,0,0,-1,-1,-1,0,
 # 0,0,0,0,0,2,2,2,2,2), nrow = m, byrow = T)
