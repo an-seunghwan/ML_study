@@ -32,6 +32,7 @@ p = dim(X)[2]
 
 ### equality constraints
 Aeq = matrix(rnorm(m*p, 0, 1), nrow = m)
+# Aeq = matrix(sample(c(-2,-1,0,1,2), m*p, replace = T), nrow = m)
 beq = matrix(rep(0, m), nrow = m)
 
 # penalty weight*****
