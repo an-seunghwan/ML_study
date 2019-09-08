@@ -30,7 +30,7 @@ conlasso_eq <- function(X, y, Aeq, beq,
   # loss value
   objval_path[1] = sum((y - X %*% beta_path[ ,1])^2) + rho_path[1] * sum(abs(beta_path[1]))
   
-  # active set
+  # initial active set
   active_set = rep(F, p)
   active_set[l$activeset] = T
   num_active = sum(active_set)
@@ -49,16 +49,20 @@ conlasso_eq <- function(X, y, Aeq, beq,
       b_l = MASS::ginv(M) %*% S  
     }
     
+    # derivative for beta and lambda for rho
     delta_b = b_l[1:num_active, ,drop=F]
     delta_l = b_l[(num_active+1):nrow(b_l), ,drop=F]
     
     ### find delta_rho
     delta_rho_vec = c()
+    
     # 1. active -> inactive (== subgradient rule check)
     nonzero_active_beta = which(active_set)[which(beta_path[active_set, k-1] != 0)]
     # predictor have potential to shrink 0
+      # -> which beta coef and delta_beta have different direction
     sub_mismatch = sign(beta_path[nonzero_active_beta, k-1]) * sign(delta_b[which(beta_path[active_set, k-1] != 0), ])
     
+    # there exists potential
     if(any(sub_mismatch == 1)) {
       delta_rho_sub_tmp = beta_path[nonzero_active_beta[which(sub_mismatch == 1)], k-1] / 
         delta_b[which(beta_path[active_set, k-1] != 0), ][which(sub_mismatch == 1)]
@@ -67,13 +71,14 @@ conlasso_eq <- function(X, y, Aeq, beq,
       
       # predictor shrink to zero
       sub_viol = which(active_set)[which(beta_path[which(active_set), k-1] / delta_b == delta_rho)]
+      
     } else {
       delta_rho_vec = c(delta_rho_vec, -1) 
     }
     
     # 2. dual feasibility & KKT - stationarity condition
-    # for not active set
-    if(sum(active_set) != p) { # if all predictors are activated, do not run opt problem
+      # for NOT active set
+    if(sum(active_set) != p) { # if all predictors are activated, do not run opt problem(all predictors are actived)
       delta = Variable(1)
       constraints = list(t(X[, !active_set]) %*% (y - X[, active_set] %*% (beta_path[active_set, k-1] - delta * delta_b)) + 
                            t(Aeq[, !active_set]) %*% (lambda_patheq[, k-1] - delta * delta_l) 
@@ -88,9 +93,12 @@ conlasso_eq <- function(X, y, Aeq, beq,
       problem = Problem(objective, constraints)
       result = solve(problem)
       
+      # find predictor which cannot satisfy KKT condition among NOT active set
+        # -> this must be actived
       kkt_viol_to_active = c()
       
-      if(is.na(result$getValue(delta))) {
+      # NA for delta value : there exist some predictor which never satisfy KKT condition
+      if(is.na(result$getValue(delta))) { 
         delta_rho_vec = c(delta_rho_vec, -1)
         
         # predictors which cannot satisfy KKT condition
@@ -101,8 +109,8 @@ conlasso_eq <- function(X, y, Aeq, beq,
                                       t(Aeq[, !active_set]) %*% lambda_patheq[, k-1] <
                                       - rho_path[k-1] * matrix(rep(1, sum(!active_set)), ncol = 1))
         kkt_viol_to_active = sort(union(kkt_viol_to_active1, kkt_viol_to_active2)) # next added predictor
-      } else {
         
+      } else {
         delta_rho_vec = c(delta_rho_vec, result$getValue(delta))
         
         # predictor on boundary(for update active set) -> update for active_set
@@ -116,7 +124,8 @@ conlasso_eq <- function(X, y, Aeq, beq,
         kkt_viol = sort(union(kkt_viol1, kkt_viol2)) # next added predictor
       }
       
-    } else {
+      # all predictors are activated
+    } else { 
       delta_rho_vec = c(delta_rho_vec, -1)
     }
     
@@ -150,7 +159,9 @@ conlasso_eq <- function(X, y, Aeq, beq,
       
       # 4. there is no candidates for delta_rho 
     } else if(delta_rho_vec[1] < 0 & delta_rho_vec[2] < 0){
-      if(length(kkt_viol_to_active) > 0) { # if we need to change active set
+      
+      # if we need to change active set (NOT terminate algorithm)
+      if(length(kkt_viol_to_active) > 0) { 
         rho_path[k] = rho_path[k-1]
         beta_path[active_set, k] = beta_path[active_set, k-1, drop=F]
         objval_path[k] = sum((y - X %*% beta_path[ ,k])^2) + rho_path[k] * sum(abs(beta_path[k]))
@@ -177,7 +188,7 @@ conlasso_eq <- function(X, y, Aeq, beq,
     objval_path[k] = sum((y - X %*% beta_path[ ,k])^2) + rho_path[k] * sum(abs(beta_path[k]))
     lambda_patheq[, k] = lambda_patheq[, k-1] - delta_rho * delta_l
     
-    # case 1) subgradient rule is violated
+      # case 1) subgradient rule is violated
     if(min_idx == 1) {
       active_set[sub_viol] = F
       
