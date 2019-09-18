@@ -25,7 +25,7 @@ path_init = function(X, y, Aeq, beq) {
   D3 = rbind(c(0, t(zero_p), t(zero_m)),
              cbind(zero_p, zero_pp, t(Aeq)),
              c(0, t(zero_p), t(zero_m)))
-  D4 = rbind(0, -t(X) %*% y, 0)
+  D4 = rbind(0, t(X) %*% y, 0)
   D5 = rbind(c(0, t(zero_p), t(zero_m)),
              cbind(one_p, zero_pp, zero_pm),
              c(0, t(zero_p), t(zero_m)))
@@ -47,8 +47,8 @@ path_init = function(X, y, Aeq, beq) {
   lambda_max = target[(p+2):nrow(target), ,drop=F]
   
   # violation
-  idx1 = which(abs((-t(X) %*% y + rho_max * one_p) - t(Aeq) %*% lambda_max) <= 1e-4)
-  idx2 = which(abs((-t(X) %*% y - rho_max * one_p) - t(Aeq) %*% lambda_max) <= 1e-4)
+  idx1 = which(abs(-t(X) %*% y + rho_max * one_p + t(Aeq) %*% lambda_max) <= 1e-4)
+  idx2 = which(abs(-t(X) %*% y - rho_max * one_p + t(Aeq) %*% lambda_max) <= 1e-4)
   activeset = sort(union(idx1, idx2))
   
   # full rank check

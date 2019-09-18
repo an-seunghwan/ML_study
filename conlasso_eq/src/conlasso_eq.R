@@ -25,7 +25,7 @@ conlasso_eq <- function(X, y, Aeq, beq,
   # subgradient for init_beta = 0
   beta_path[, 1] = 0
   resid = y - X %*% beta_path[, 1]
-  subgrad = (-t(X) %*% resid - t(Aeq) %*% lambda_patheq[ ,1]) / rho_path[1]
+  subgrad = (t(X) %*% resid - t(Aeq) %*% lambda_patheq[ ,1]) / rho_path[1]
   
   # loss value
   objval_path[1] = sum((y - X %*% beta_path[ ,1])^2) + rho_path[1] * sum(abs(beta_path[1]))
@@ -80,11 +80,11 @@ conlasso_eq <- function(X, y, Aeq, beq,
       # for NOT active set
     if(sum(active_set) != p) { # if all predictors are activated, do not run opt problem(all predictors are actived)
       delta = Variable(1)
-      constraints = list(t(X[, !active_set]) %*% (y - X[, active_set] %*% (beta_path[active_set, k-1] - delta * delta_b)) + 
+      constraints = list(-t(X[, !active_set]) %*% (y - X[, active_set] %*% (beta_path[active_set, k-1] - delta * delta_b)) + 
                            t(Aeq[, !active_set]) %*% (lambda_patheq[, k-1] - delta * delta_l) 
                          <= (rho_path[k-1] - delta) * matrix(rep(1, sum(!active_set)), ncol = 1),
                          
-                         t(X[, !active_set]) %*% (y - X[, active_set] %*% (beta_path[active_set, k-1] - delta * delta_b)) +
+                         -t(X[, !active_set]) %*% (y - X[, active_set] %*% (beta_path[active_set, k-1] - delta * delta_b)) +
                            t(Aeq[, !active_set]) %*% (lambda_patheq[, k-1] - delta * delta_l) 
                          >= -(rho_path[k-1] - delta) * matrix(rep(1, sum(!active_set)), ncol = 1),
                          
@@ -102,10 +102,10 @@ conlasso_eq <- function(X, y, Aeq, beq,
         delta_rho_vec = c(delta_rho_vec, -1)
         
         # predictors which cannot satisfy KKT condition
-        kkt_viol_to_active1 = which(t(X[, !active_set]) %*% (y - X[, active_set] %*% beta_path[active_set, k-1]) + 
+        kkt_viol_to_active1 = which(-t(X[, !active_set]) %*% (y - X[, active_set] %*% beta_path[active_set, k-1]) + 
                                       t(Aeq[, !active_set]) %*% lambda_patheq[, k-1] >
                                       rho_path[k-1] * matrix(rep(1, sum(!active_set)), ncol = 1))
-        kkt_viol_to_active2 = which(t(X[, !active_set]) %*% (y - X[, active_set] %*% beta_path[active_set, k-1]) + 
+        kkt_viol_to_active2 = which(-t(X[, !active_set]) %*% (y - X[, active_set] %*% beta_path[active_set, k-1]) + 
                                       t(Aeq[, !active_set]) %*% lambda_patheq[, k-1] <
                                       - rho_path[k-1] * matrix(rep(1, sum(!active_set)), ncol = 1))
         kkt_viol_to_active = sort(union(kkt_viol_to_active1, kkt_viol_to_active2)) # next added predictor
@@ -115,10 +115,10 @@ conlasso_eq <- function(X, y, Aeq, beq,
         
         # predictor on boundary(for update active set) -> update for active_set
         delta_rho_kkt_tmp = result$getValue(delta)
-        kkt_viol1 = which(abs(t(X[, !active_set]) %*% (y - X[, active_set] %*% (beta_path[active_set, k-1] - delta_rho_kkt_tmp * delta_b)) + 
+        kkt_viol1 = which(abs(-t(X[, !active_set]) %*% (y - X[, active_set] %*% (beta_path[active_set, k-1] - delta_rho_kkt_tmp * delta_b)) + 
                                 t(Aeq[, !active_set]) %*% (lambda_patheq[, k-1] - delta_rho_kkt_tmp * delta_l) - 
                                 (rho_path[k-1] - delta_rho_kkt_tmp) * matrix(rep(1, sum(!active_set)), ncol = 1)) <= 1e-6)
-        kkt_viol2 = which(abs(t(X[, !active_set]) %*% (y - X[, active_set] %*% (beta_path[active_set, k-1] - delta_rho_kkt_tmp * delta_b)) + 
+        kkt_viol2 = which(abs(-t(X[, !active_set]) %*% (y - X[, active_set] %*% (beta_path[active_set, k-1] - delta_rho_kkt_tmp * delta_b)) + 
                                 t(Aeq[, !active_set]) %*% (lambda_patheq[, k-1] - delta_rho_kkt_tmp * delta_l) + 
                                 (rho_path[k-1] - delta_rho_kkt_tmp) * matrix(rep(1, sum(!active_set)), ncol = 1)) <= 1e-6)
         kkt_viol = sort(union(kkt_viol1, kkt_viol2)) # next added predictor
@@ -126,6 +126,7 @@ conlasso_eq <- function(X, y, Aeq, beq,
       
       # all predictors are activated
     } else { 
+      kkt_viol_to_active = c()
       delta_rho_vec = c(delta_rho_vec, -1)
     }
     
