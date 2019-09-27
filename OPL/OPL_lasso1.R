@@ -63,12 +63,14 @@ x_init >= 0
 D1 = cbind(1, t(zero_m), t(zero_p))
 D2 = cbind(zero_p, t(Aeq), I_pp)
 D3 = cbind(one_p, zero_pm, zero_pp)
+D4 = cbind(zero_p, zero_pm, I_pp)
 
 #
 target = Variable(1 + m + p)
 constraints = list(2 * P %*% x_init + D2 %*% target <= D3 %*% target,
                    2 * P %*% x_init + D2 %*% target >= - D3 %*% target,
-                   D1 %*% target >= 0)
+                   D1 %*% target >= 0,
+                   D4 %*% target >= zero_p) # 제약조건 수정 필요
 objective = Minimize(D1 %*% target)
 problem = Problem(objective, constraints)
 result = solve(problem)
